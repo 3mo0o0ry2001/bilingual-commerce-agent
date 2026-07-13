@@ -1,0 +1,14 @@
+﻿venv/
+__pycache__/
+*.pyc
+.env
+data/raw/
+data/processed/
+data/chroma/
+.git/
+.pytest_cache/
+tests/__pycache__/
+*.log
+.DS_Store
+.vscode/
+alembic/versions/__pycache__/
