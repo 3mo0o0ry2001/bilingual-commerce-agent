@@ -53,13 +53,11 @@ def _search_by_name_hints(db, requested_items: list[dict]) -> list[tuple]:
 
         product = None
 
-        # 1) Semantic search first (handles Arabic, transliteration, fuzzy)
         sem_results = semantic_search(hint, top_k=1)
         if sem_results:
             best_id = sem_results[0]["item_id"]
             product = db.query(Product).filter(Product.item_id == best_id).first()
 
-        # 2) Fallback to exact matching if semantic found nothing
         if not product:
             pattern = f"%{hint}%"
             product = (
@@ -85,7 +83,33 @@ def retrieve_products_node(state: AgentState) -> dict:
 
     with SessionLocal() as db:
         if intent == "search":
-            products = _search_by_filters(db, state.get("filters", {}))
+            user_request = state.get("user_request", "")
+
+            semantic_matches = semantic_search(user_request, top_k=5, max_distance=0.85)
+
+            filters = state.get("filters", {})
+
+            if semantic_matches:
+                matched_ids = [m["item_id"] for m in semantic_matches]
+                query = db.query(Product).filter(Product.item_id.in_(matched_ids))
+                query = query.filter(Product.quantity_in_stock > 0)
+                if filters.get("max_price"):
+                    query = query.filter(Product.price_aed <= filters["max_price"])
+                if filters.get("min_price"):
+                    query = query.filter(Product.price_aed >= filters["min_price"])
+                if filters.get("gender"):
+                    query = query.filter(
+                        or_(Product.gender == filters["gender"], Product.gender == "unisex")
+                    )
+                products = query.all()
+            else:
+                products = []
+
+            if not products or any(filters.get(k) for k in ("max_price", "min_price", "gender", "keywords")):
+                filtered = _search_by_filters(db, filters)
+                existing_ids = {p.item_id for p in products}
+                products += [p for p in filtered if p.item_id not in existing_ids]
+
             return {
                 "matched_products": [
                     {
