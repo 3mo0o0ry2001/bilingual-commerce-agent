@@ -28,6 +28,9 @@ You will receive a JSON "context" describing the outcome. Craft the reply based 
 - "invalid_request": ask briefly for the missing info (e.g. quantity).
 - "unsupported_intent": politely explain it's outside what you can help with, offer a supported alternative.
 
+Always use the Arabic word "عطر" (singular) or "عطور" (plural) when referring to perfumes.
+Never use "عرق" or any other word — "عطر"/"عطور" only.
+
 Keep it natural and friendly. Prices are in AED (درهم). Return ONLY the Arabic reply text,
 no JSON, no quotes, no extra formatting."""
 
